@@ -1,10 +1,19 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.http import HttpResponse
+from django.forms import inlineformset_factory
 from accounts.models import *
+from accounts.forms import *
+
 # Create your views here.
-def customers(request):
-    # return HttpResponse('about page')
-    return render(request, 'accounts/customers.html')
+def customers(request, id):
+    customer = Customer.objects.get(id = id)
+    orders = customer.order_set.all()
+    order_count = orders.count()
+    return render(request, 'accounts/customers.html', {
+        'customer' : customer,
+        'orders' : orders,
+        'order_count' : order_count
+    })
 
 def products(request):
     # return HttpResponse('contact pafe')
@@ -26,4 +35,42 @@ def dashboard(request):
         'total' : total,
         'delivered' : delivered,
         'pending': pending
+    })
+
+def orderCreate(request, customerId):
+    OrderFormSet = inlineformset_factory(Customer, Order, fields=('product', 'status'), extra=10)
+    customer = Customer.objects.get(id = customerId)
+    formset = OrderFormSet(instance=customer) #need to add instance = customer to know whose formset is this 
+    # form = OrderForm(initial= {'customer': customer})
+    if request.method == "POST":
+
+        formset = OrderFormSet(request.POST, instance=customer)
+        if formset.is_valid():
+            formset.save()
+            return redirect('/')
+
+    return render(request, 'accounts/order_form.html', {
+        'formset' : formset
+    })
+
+def orderUpdate(request, orderId):
+    order = Order.objects.get(id = orderId)
+    form = OrderForm(instance=order)
+    if request.method == "POST":
+        form = OrderForm(request.POST, instance=order) #should add instance you want to update
+        if form.is_valid():
+            form.save()
+            return redirect('/')
+
+    return render(request, 'accounts/order_form.html', {
+        'form' : form
+    })
+
+def orderDelete(request, orderId):
+    order = Order.objects.get(id = orderId)
+    if request.method == "POST":
+        order.delete()
+        return redirect('/')
+    return render(request, 'accounts/order_delete.html', {
+        'order' : order
     })
