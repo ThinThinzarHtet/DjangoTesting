@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.deletion import CASCADE
 
 # Create your models here.
 class Customer(models.Model):
@@ -6,6 +7,12 @@ class Customer(models.Model):
     email = models.CharField(max_length=200, null=True)
     phone = models.CharField(max_length=200, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Tag(models.Model):
+    name = models.CharField(max_length=200, null=True)
 
     def __str__(self):
         return self.name
@@ -20,6 +27,21 @@ class Product(models.Model):
     category = models.CharField(max_length=2000, null=True, choices= category)
     description = models.CharField(max_length=2000, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    tags = models.ManyToManyField(Tag)
 
     def __str__(self):
         return self.name
+
+class Order(models.Model):
+    status = (
+        ('pending', 'Pending'),
+        ('out for delivery', 'Out For Delivery'),
+        ('delivered', 'Delivered')
+    )
+    customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
+    product = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=200, null=True, choices=status)
+
+    def __str__(self):
+        return self.product.name
