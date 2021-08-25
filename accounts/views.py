@@ -4,6 +4,7 @@ from django.forms import inlineformset_factory
 from accounts.models import *
 from accounts.forms import *
 from .filters import *
+from django.contrib.auth.forms import UserCreationForm
 
 # Create your views here.
 def customers(request, id):
@@ -77,4 +78,15 @@ def orderDelete(request, orderId):
         return redirect('/')
     return render(request, 'accounts/order_delete.html', {
         'order' : order
+    })
+
+def register(request):
+    form = RegisterForm()
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('/')
+    return render(request, 'accounts/register.html', {
+        'form' : form
     })
