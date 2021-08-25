@@ -4,7 +4,8 @@ from django.forms import inlineformset_factory
 from accounts.models import *
 from accounts.forms import *
 from .filters import *
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate,login,logout
+from django.contrib import messages
 
 # Create your views here.
 def customers(request, id):
@@ -90,3 +91,23 @@ def register(request):
     return render(request, 'accounts/register.html', {
         'form' : form
     })
+
+'''login function'''
+def userLogin(request):
+    if request.method == "POST":
+        username = request.POST['username'] #[username] ka login.html mhr label htl ka username so tae name
+        password = request.POST['password']
+
+        user = authenticate(request, username = username, password = password) #authenticate() ka db htl mhr htae htr tae data twy shi lr sit, shi yin user yaw obj ko pay ml ,ma shi yin none pay ml
+        if user is not None:
+            login(request, user)
+            return redirect('/')
+        else:
+            messages.error(request, 'username and password is incorrect')
+            return redirect('/login')
+    return render(request, 'accounts/login.html')
+
+'''logout function'''
+def userLogout(request):
+    logout(request)
+    return redirect('/login')
