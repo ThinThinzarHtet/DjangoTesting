@@ -1,4 +1,4 @@
-from accounts.decorators import authenticated_user
+from accounts.decorators import authenticated_user, admin_only, allowed_roles
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from django.forms import inlineformset_factory
@@ -10,6 +10,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 # Create your views here.
+
+def customer_profile(request):
+    return render(request, 'accounts/customer_profile.html')
+
 @login_required(login_url='/login')
 def customers(request, id):
     customer = Customer.objects.get(id = id)
@@ -33,6 +37,7 @@ def products(request):
     })
 
 @login_required(login_url='/login') #if login, return dashbord. If not login , redirect to login page
+@admin_only
 def dashboard(request):
     # return HttpResponse('dashboard pafe')
     customers = Customer.objects.all()
@@ -49,6 +54,7 @@ def dashboard(request):
     })
 
 @login_required(login_url='/login')
+@allowed_roles(roles=['admin'])
 def orderCreate(request, customerId):
     OrderFormSet = inlineformset_factory(Customer, Order, fields=('product', 'status'), extra=10)
     customer = Customer.objects.get(id = customerId)
