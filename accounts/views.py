@@ -1,4 +1,5 @@
 from accounts.decorators import authenticated_user, admin_only, allowed_roles
+from django.contrib.auth.models import Group
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from django.forms import inlineformset_factory
@@ -11,10 +12,22 @@ from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
+@login_required(login_url='/login')
+@allowed_roles(roles=['customer'])
 def customer_profile(request):
-    return render(request, 'accounts/customer_profile.html')
+    orders = request.user.customer.order_set.all()
+    total = orders.count()
+    delivered = orders.filter(status="delivered").count()
+    pending = orders.filter(status="pending").count()
+    return render(request, 'accounts/customer_profile.html', {
+        'orders': orders,
+        'total': total,
+        'delivered': delivered,
+        'pending': pending
+    })
 
 @login_required(login_url='/login')
+@allowed_roles(roles=['admin'])
 def customers(request, id):
     customer = Customer.objects.get(id = id)
     orders = customer.order_set.all()
@@ -29,6 +42,7 @@ def customers(request, id):
     })
 
 @login_required(login_url='/login')
+@allowed_roles(roles=['admin'])
 def products(request):
     # return HttpResponse('contact pafe')
     products = Product.objects.all()
@@ -72,6 +86,7 @@ def orderCreate(request, customerId):
     })
 
 @login_required(login_url='/login')
+@allowed_roles(roles=['admin'])
 def orderUpdate(request, orderId):
     order = Order.objects.get(id = orderId)
     form = OrderForm(instance=order)
@@ -86,6 +101,7 @@ def orderUpdate(request, orderId):
     })
 
 @login_required(login_url='/login')
+@allowed_roles(roles=['admin'])
 def orderDelete(request, orderId):
     order = Order.objects.get(id = orderId)
     if request.method == "POST":
@@ -101,7 +117,13 @@ def register(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            #add customer group as default
+            gp = Group.objects.get(name='customer')
+            user.groups.add(gp)
+
+            #login user
+            login(request, user)
             return redirect('/')
     return render(request, 'accounts/register.html', {
         'form' : form
@@ -124,6 +146,7 @@ def userLogin(request):
     return render(request, 'accounts/login.html')
 
 '''logout function'''
+@login_required(login_url='/login')
 def userLogout(request):
     logout(request)
     return redirect('/login')
