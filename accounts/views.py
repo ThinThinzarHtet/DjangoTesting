@@ -129,11 +129,11 @@ def register(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
-            #add customer group as default
-            gp = Group.objects.get(name='customer')
-            user.groups.add(gp)
-            #create customer profile for user
-            Customer.objects.create(user=user)
+            # #add customer group as default
+            # gp = Group.objects.get(name='customer')
+            # user.groups.add(gp)
+            # #create customer profile for user
+            # Customer.objects.create(user=user)
             #login user
             login(request, user)
             return redirect('/')
